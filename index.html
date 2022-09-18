@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeMap</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      width: 100%;
+    }
+
+    .map {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="map" id="map" />
+  <script src="./dist/timemap.mjs"></script>
+  <script>
+    console.log('version:', timemap.version);
+    const map = new timemap.Map('map', {});
+    // map.setZoom(1);
+    // map.flyTo([120, 80])
+    /* for (let i = -180; i <= 180; i += 10) {
+      map.addPoint([i, 30])
+    } */
+    map.addPolygon([[-170, 80], [180, 80], [130, -70]])
+  </script>
+</body>
+
+</html>
