@@ -3,3 +3,8 @@ export interface CameraProps {
   y: number;
   z: number;
 }
+
+export interface Position {
+  x: number;
+  y: number;
+}

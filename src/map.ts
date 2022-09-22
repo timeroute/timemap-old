@@ -41,7 +41,7 @@ class Map {
 
   addPoint(lngLat: [number, number]) {
     const poi = MercatorCoordinate.fromLngLat(lngLat);
-    this.renderer.draw(poi);
+    this.renderer.draw();
   }
 
   addPolygon(lngLats: [number, number][]) {
@@ -49,7 +49,8 @@ class Map {
     for (const lngLat of lngLats) {
       points.push(...MercatorCoordinate.fromLngLat(lngLat), 1.0);
     }
-    this.renderer.draw(points);
+    this.renderer.setData(points);
+    this.renderer.draw();
   }
 }
 
