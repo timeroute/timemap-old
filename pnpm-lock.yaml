@@ -5,6 +5,9 @@ specifiers:
   '@rollup/plugin-json': ^4.1.0
   '@rollup/plugin-node-resolve': ^14.1.0
   '@rollup/plugin-typescript': ^8.5.0
+  '@types/earcut': ^2.1.1
+  '@types/geojson': ^7946.0.10
+  earcut: ^2.2.4
   gl-matrix: ^3.4.3
   rollup: ^2.79.0
   rollup-plugin-glslify: ^1.3.1
@@ -13,6 +16,7 @@ specifiers:
   typescript: ^4.8.3
 
 dependencies:
+  earcut: 2.2.4
   gl-matrix: 3.4.3
 
 devDependencies:
@@ -20,6 +24,8 @@ devDependencies:
   '@rollup/plugin-json': 4.1.0_rollup@2.79.0
   '@rollup/plugin-node-resolve': 14.1.0_rollup@2.79.0
   '@rollup/plugin-typescript': 8.5.0_tznp6w7csbjledp5nresoxoky4
+  '@types/earcut': 2.1.1
+  '@types/geojson': 7946.0.10
   rollup: 2.79.0
   rollup-plugin-glslify: 1.3.1
   rollup-plugin-serve: 2.0.1
@@ -105,8 +111,16 @@ packages:
       rollup: 2.79.0
     dev: true
 
+  /@types/earcut/2.1.1:
+    resolution: {integrity: sha512-w8oigUCDjElRHRRrMvn/spybSMyX8MTkKA5Dv+tS1IE/TgmNZPqUYtvYBXGY8cieSE66gm+szeK+bnbxC2xHTQ==}
+    dev: true
+
   /@types/estree/0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
+    dev: true
+
+  /@types/geojson/7946.0.10:
+    resolution: {integrity: sha512-Nmh0K3iWQJzniTuPRcJn5hxXkfB1T1pgB89SBig5PlJQU5yocazeu4jATJlaA0GYFKWMqDdvYemoSnF2pXgLVA==}
     dev: true
 
   /@types/node/18.7.18:
@@ -195,6 +209,10 @@ packages:
       readable-stream: 2.3.7
       stream-shift: 1.0.1
     dev: true
+
+  /earcut/2.2.4:
+    resolution: {integrity: sha512-/pjZsA1b4RPHbeWZQn66SWS8nZZWLQQ23oE3Eam7aroEFGEvwKAsJfZ9ytiEMycfzXWpca4FA9QIOehf7PocBQ==}
+    dev: false
 
   /end-of-stream/1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}

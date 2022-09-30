@@ -5,6 +5,7 @@ import { createProgram } from './program';
 import { mat3, vec3 } from 'gl-matrix';
 import type { CameraProps, Position } from '../../types';
 import { getClipSpacePosition } from '../utils/transform';
+import { MAX_ZOOM, MIN_ZOOM } from '../constants';
 
 class Renderer {
   canvas: HTMLCanvasElement;
@@ -50,6 +51,7 @@ class Renderer {
     this.posLocation = this.gl.getAttribLocation(this.program, 'a_position');
     this.gl.enableVertexAttribArray(this.posLocation);
     this.canvas.addEventListener('mousedown', this.mousedown);
+    this.canvas.addEventListener('wheel', this.mousezoom);
 
     this.updateMatrix()
   }
@@ -121,6 +123,26 @@ class Renderer {
 
   mousezoom = (ev: WheelEvent) => {
     ev.preventDefault();
+    const [x, y] = getClipSpacePosition(ev, this.canvas);
+    const [preZoomX, preZoomY] = vec3.transformMat3(
+      vec3.create(),
+      [x, y, 0],
+      mat3.invert(mat3.create(), this.matrix)
+    );
+    const zoomDelta = -ev.deltaY * (1 / 300);
+    this.camera.z += zoomDelta;
+    this.camera.z = Math.max(MIN_ZOOM, Math.min(this.camera.z, MAX_ZOOM));
+    this.updateMatrix();
+    const [postZoomX, postZoomY] = vec3.transformMat3(
+      vec3.create(),
+      [x, y, 0],
+      mat3.invert(mat3.create(), this.matrix)
+    );
+
+    this.camera.x += preZoomX - postZoomX;
+    this.camera.y += preZoomY - postZoomY;
+    this.updateMatrix();
+    this.draw();
   }
 
   clear = () => {
