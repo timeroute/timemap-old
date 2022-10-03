@@ -1,12 +1,10 @@
+import type { VectorLayerOptions } from '../types';
 import MercatorCoordinate from "./utils/mercator-coordinate";
 import Renderer from "./webgl/renderer";
 
 class Map {
   dom: HTMLElement;
   canvas: HTMLCanvasElement;
-  points: number[] = [];
-  lines: number[] = [];
-  polygons: number[] = [];
   renderer: Renderer;
 
   constructor(id: string, options: unknown) {
@@ -39,17 +37,8 @@ class Map {
     this.renderer.updateMatrix();
   }
 
-  addPoint(lngLat: [number, number]) {
-    const poi = MercatorCoordinate.fromLngLat(lngLat);
-    this.renderer.draw();
-  }
-
-  addPolygon(lngLats: [number, number][]) {
-    const points = [];
-    for (const lngLat of lngLats) {
-      points.push(...MercatorCoordinate.fromLngLat(lngLat), 1.0);
-    }
-    this.renderer.setData(points);
+  addLayer(id: string, type: 'vector' | 'geojson', options: VectorLayerOptions) {
+    this.renderer.addLayer(id, type, options);
     this.renderer.draw();
   }
 }
