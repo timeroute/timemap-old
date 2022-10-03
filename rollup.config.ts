@@ -2,9 +2,9 @@ import { defineConfig } from 'rollup';
 import json from '@rollup/plugin-json';
 import typescript from '@rollup/plugin-typescript';
 import commonjs from '@rollup/plugin-commonjs';
-import serve from 'rollup-plugin-serve'
 import glslify from 'rollup-plugin-glslify';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import dev from 'rollup-plugin-dev';
 
 export default defineConfig({
   input: 'src/index.ts',
@@ -27,7 +27,13 @@ export default defineConfig({
     nodeResolve(),
     commonjs(),
     json(),
-    serve(),
-    glslify()
+    glslify(),
+    dev({
+      proxy: [
+        { from: '/map', to: 'https://maps.ckochis.com/data/v3', opts: {
+          crossOriginIsolated: true,
+        } }
+      ]
+    })
   ]
 })
