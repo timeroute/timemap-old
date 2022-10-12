@@ -22,14 +22,15 @@
 
 <body>
   <div class="map" id="map" />
-  <script src="./dist/timemap.mjs"></script>
+  <script src="./dist/timemap.js"></script>
   <script>
     console.log('version:', timemap.version);
-    const map = new timemap.Map('map', {});
-    map.setZoom(8);
-    map.flyTo([92.373, 39.0234])
+    const map = new timemap.Map('map', {
+      center: [120, 30],
+      zoom: 9,
+    });
     map.addLayer('main', 'vector', {
-      url: '/map/{z}/{x}/{y}.pbf',
+      url: 'http://a.tiles.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.mvt?access_token=pk.eyJ1IjoiY2hpbmVzZWphciIsImEiOiJjanU5bXFpZ28wN3JtNGRwZGM5MW84czVsIn0.DhHUA_m4clzrzHFGtj97kQ',
     });
   </script>
 </body>

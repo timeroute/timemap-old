@@ -2,7 +2,8 @@ import Renderer from "../webgl/renderer";
 import Protobuf from 'pbf';
 import { VectorTile } from "@mapbox/vector-tile";
 import { LAYERS } from "../constants";
-import { geometryToVertices } from "../utils/transform";
+import { fetchTile } from "../utils/fetch-data";
+// import { geometryToVertices } from "../utils/transform";
 
 export default class VectorLayer {
   renderer: Renderer;
@@ -12,6 +13,7 @@ export default class VectorLayer {
   minZoom: number;
   maxZoom: number;
   tileData: any = {};
+  fetchController: AbortController | undefined;
   
   constructor(renderer: Renderer, id: string, url: string, tileSize: number, minZoom: number, maxZoom: number) {
     this.renderer = renderer;
@@ -35,6 +37,7 @@ export default class VectorLayer {
     // get latest tiles in view
     const tilesInView = this.renderer.getTilesInView();
     const tileData: any = {}
+    const fetchController: AbortController = new AbortController();
     const tileReqs = tilesInView.map(async (tileInView) => {
       const tileKey = tileInView.join('/');
       tileData[tileKey] = this.tileData[tileKey];
@@ -42,30 +45,22 @@ export default class VectorLayer {
         console.log(tileKey, 'has cached');
         return;
       }
-      const [x, y, z] = tileInView;
-      const res = await fetch(this.url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y)));
-      const data = await res.arrayBuffer();
-      const pbf = new Protobuf(data);
-      const tile = new VectorTile(pbf);
-
-      const layers: any = {};
-      Object.keys(LAYERS).forEach((layer) => {
-        if (tile?.layers?.[layer]) {
-          // @ts-ignore
-          const numFeatures = tile.layers[layer]?._features?.length || 0;
-          const features = [];
-          for (let i = 0; i < numFeatures; i++) {
-            const geojson = tile.layers[layer].feature(i).toGeoJSON(x, y, z);
-            const vertices = geometryToVertices(geojson.geometry);
-            features.push(vertices);
-          }
-          layers[layer] = features;
-        }
+      tileData[tileKey] = await fetchTile({
+        tile: tileInView,
+        layers: LAYERS,
+        url: this.url,
       });
-      tileData[tileKey] = layers;
     })
     await Promise.all(tileReqs);
+    this.fetchController = fetchController;
     this.tileData = tileData;
     return tileData;
+  }
+
+  abortFetch() {
+    if (this.fetchController) {
+      this.fetchController.abort();
+      this.fetchController = undefined;
+    }
   }
 }

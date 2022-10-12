@@ -22,51 +22,6 @@ export function getClipSpacePosition (ev: MouseEvent, canvas: HTMLCanvasElement)
 }
 
 /**
- * get vertices from geometry
- * @param geometry GeoJSON Geometry with Polygon or MultiPolygon
- * @returns Float32Array
- */
-export function geometryToVertices(geometry: GeoJSON.Geometry) {
-  const verticesFromPolygon = (coordinates: GeoJSON.Position[][], n: number | undefined = undefined) => {
-    const data = earcut.flatten(coordinates);
-    const triangles = earcut(data.vertices, data.holes, 2);    
-
-    const vertices = new Float32Array(triangles.length * 3);
-    for (let i = 0; i < triangles.length; i++) {
-      const point = triangles[i];
-      const lng = data.vertices[point * 2];
-      const lat = data.vertices[point * 2 + 1];
-      const [x, y] = MercatorCoordinate.fromLngLat([lng, lat]);
-      vertices[i * 3] = x;
-      vertices[i * 3 + 1] = y;
-      vertices[i * 3 + 2] = 1.0;
-    }
-    return vertices;
-  }
-
-  if (geometry.type === 'Polygon') {
-    return verticesFromPolygon(geometry.coordinates);
-  }
-
-  if (geometry.type === 'MultiPolygon') {
-    const positions: number[] = [];
-    geometry.coordinates.forEach((polygon, i) => {
-      const vertices = verticesFromPolygon([polygon[0]], i);
-
-      // doing an array.push with too many values can cause
-      // stack size errors, so we manually iterate and append
-      vertices.forEach((vertex) => {
-        positions[positions.length] = vertex;
-      });
-    });
-    return Float32Array.from(positions);
-  }
-
-  // only support Polygon & Multipolygon for now
-  return new Float32Array([]);
-}
-
-/**
  * returns the lng/lat bbox for the viewport
  * @param camera camera position
  * @param width canvas width

@@ -6,7 +6,7 @@ import { mat3, vec3 } from 'gl-matrix';
 import tilebelt from '@mapbox/tilebelt';
 import type { CameraProps, Position, VectorLayerOptions } from '../../types';
 import { getBounds, getClipSpacePosition } from '../utils/transform';
-import { DEFAULT_VECTOR_LAYER_OPTIONS, LAYERS, MAX_ZOOM, MIN_ZOOM, TILE_SIZE } from '../constants';
+import { DEFAULT_VECTOR_LAYER_OPTIONS, LAYERS, MAX_ZOOM, MIN_ZOOM, TILE_BUFFER, TILE_SIZE } from '../constants';
 import VectorLayer from '../layers/vector_layer';
 
 /**
@@ -133,7 +133,17 @@ class Renderer {
         tilesInView.push([x, y, z]);
       }
     }
-    return tilesInView;
+    const bufferedTiles = [];
+    for (let bufX = minX - TILE_BUFFER; bufX <= maxX + TILE_BUFFER; bufX++) {
+      for (let bufY = minY - TILE_BUFFER; bufY <= maxY + TILE_BUFFER; bufY++) {
+        bufferedTiles.push([bufX, bufY, z]); // buffer in xy direction
+
+        // load parent tiles 2 levels up
+        bufferedTiles.push(tilebelt.getParent([bufX, bufY, z]));
+        bufferedTiles.push(tilebelt.getParent(tilebelt.getParent([bufX, bufY, z])));
+      }
+    }
+    return tilesInView.concat(bufferedTiles);
   }
 
   /**
@@ -170,6 +180,7 @@ class Renderer {
     this.gl.uniformMatrix3fv(matrixLocation, false, this.matrix);
 
     this.layerManagers.forEach(async (layerManager) => {
+      layerManager.abortFetch();
       const data = await layerManager.fetchData();
       
       Object.keys(data).forEach((tile) => {
