@@ -1,3 +1,10 @@
+export interface MapOptions {
+  center: [number, number];
+  zoom: number;
+  pitch: number;
+  bearing: number;
+}
+
 export interface CameraProps {
   x: number;
   y: number;

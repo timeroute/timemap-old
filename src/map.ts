@@ -1,17 +1,26 @@
-import type { VectorLayerOptions } from '../types';
+import type { MapOptions, VectorLayerOptions } from '../types';
 import MercatorCoordinate from "./utils/mercator-coordinate";
 import Renderer from "./webgl/renderer";
+
+const defaultMapOptions: MapOptions = {
+  center: [0, 0],
+  zoom: 1,
+  pitch: 90,
+  bearing: 0,
+}
 
 class Map {
   dom: HTMLElement;
   canvas: HTMLCanvasElement;
   renderer: Renderer;
+  options: MapOptions;
 
-  constructor(id: string, options: unknown) {
+  constructor(id: string, options: MapOptions) {
     const dom = document.getElementById(id);
     if (!dom) {
       throw new Error("dom id not found");
     }
+    this.options = Object.assign(defaultMapOptions, options);
     this.canvas = document.createElement('canvas');
     dom.style.overflow = 'hidden';
     this.canvas.width = dom.clientWidth;
@@ -19,6 +28,8 @@ class Map {
     dom.append(this.canvas);
     this.dom = dom;
     this.renderer = new Renderer(this.canvas);
+    this.setZoom(this.options.zoom);
+    this.flyTo(this.options.center);
   }
 
   setZoom(zoom: number) {
