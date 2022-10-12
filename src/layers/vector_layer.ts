@@ -11,8 +11,7 @@ export default class VectorLayer {
   tileSize: number;
   minZoom: number;
   maxZoom: number;
-  tileKey: string = '';
-  data: any;
+  tileData: any = {};
   
   constructor(renderer: Renderer, id: string, url: string, tileSize: number, minZoom: number, maxZoom: number) {
     this.renderer = renderer;
@@ -33,11 +32,16 @@ export default class VectorLayer {
 
   async fetchData() {
     this.checkOptions();
+    // get latest tiles in view
     const tilesInView = this.renderer.getTilesInView();
-    const key = tilesInView.map(t => t.join('/')).join(';');
-    if (this.tileKey === key) return this.data;
     const tileData: any = {}
     const tileReqs = tilesInView.map(async (tileInView) => {
+      const tileKey = tileInView.join('/');
+      tileData[tileKey] = this.tileData[tileKey];
+      if (tileData[tileKey]) {
+        console.log(tileKey, 'has cached');
+        return;
+      }
       const [x, y, z] = tileInView;
       const res = await fetch(this.url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y)));
       const data = await res.arrayBuffer();
@@ -58,11 +62,10 @@ export default class VectorLayer {
           layers[layer] = features;
         }
       });
-      tileData[tileInView.join('/')] = layers;
+      tileData[tileKey] = layers;
     })
     await Promise.all(tileReqs);
-    this.tileKey = key;
-    this.data = tileData;
+    this.tileData = tileData;
     return tileData;
   }
 }
