@@ -5,26 +5,26 @@ import commonjs from '@rollup/plugin-commonjs';
 import glslify from 'rollup-plugin-glslify';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import dev from 'rollup-plugin-dev';
+import { babel } from '@rollup/plugin-babel';
 
 export default defineConfig({
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/timemap.cjs',
-      format: 'cjs',
-      name: 'timemap'
-    },
-    {
-      file: 'dist/timemap.mjs',
+      file: 'dist/timemap.js',
       format: 'umd',
-      name: 'timemap'
+      name: 'timemap',
     }
   ],
   plugins: [
-    typescript({
-      resolveJsonModule: true
+    typescript(),
+    nodeResolve({
+      browser: true
     }),
-    nodeResolve(),
+    babel({
+      exclude: ["node_modules/**"],
+      babelHelpers: 'runtime'
+    }),
     commonjs(),
     json(),
     glslify(),
