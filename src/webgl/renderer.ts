@@ -9,24 +9,58 @@ import { getBounds, getClipSpacePosition } from '../utils/transform';
 import { DEFAULT_VECTOR_LAYER_OPTIONS, LAYERS, MAX_ZOOM, MIN_ZOOM, TILE_SIZE } from '../constants';
 import VectorLayer from '../layers/vector_layer';
 
+/**
+ * Renderer
+ */
 class Renderer {
+  /**
+   * map canvas element
+   */
   canvas: HTMLCanvasElement;
+  /**
+   * map gl context
+   */
   gl: WebGLRenderingContext;
+  /**
+   * webgl program
+   */
   program: WebGLProgram | undefined;
+  /**
+   * glPosition in vertex shader
+   */
   posLocation: number | undefined;
+  /**
+   * buffer data to glPosition
+   */
   positions: Float32Array = new Float32Array([]);
+  /**
+   * camera in map
+   */
   camera: CameraProps = {
     x: 0,
     y: 0,
     z: 0,
   };
+  /**
+   * transform matrix
+   */
   matrix: mat3 = mat3.create();
+  /**
+   * mouse event start position
+   */
   startPosition: Position = {
     x: 0,
     y: 0,
   }
+  /**
+   * layer managers
+   */
   layerManagers: Array<VectorLayer> = [];
 
+  /**
+   * constructor function in Renderer class
+   * @param canvas canvas element to init map
+   */
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
 
@@ -39,6 +73,9 @@ class Renderer {
     this.init();
   }
 
+  /**
+   * init shader, program and buffer
+   */
   init() {
     this.gl.clearColor(1.0, 1.0, 1.0, 1.0);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -59,6 +96,9 @@ class Renderer {
     this.updateMatrix()
   }
 
+  /**
+   * update transform matrix
+   */
   updateMatrix() {
     const cameraMatrix = mat3.create();
     mat3.translate(cameraMatrix, cameraMatrix, [this.camera.x, this.camera.y]);
@@ -73,7 +113,11 @@ class Renderer {
     )
   }
 
-  getTilesInView() {
+  /**
+   * get tiles in screen map
+   * @returns tiles
+   */
+  getTilesInView(): [number, number, number][] {
     const {camera, canvas: {width, height}} = this;
     const bbox = getBounds(camera, width, height);
     
@@ -92,10 +136,21 @@ class Renderer {
     return tilesInView;
   }
 
+  /**
+   * get layer by id
+   * @param id layer id
+   * @returns layer
+   */
   getLayer(id: string) {
     return this.layerManagers.find(layer => layer.id === id);
   }
   
+  /**
+   * add layer
+   * @param id layer id
+   * @param type support vector or geojson layer
+   * @param options layer options
+   */
   addLayer(id: string, type: 'vector' | 'geojson', options: VectorLayerOptions) {
     if (this.getLayer(id)) throw new Error("layer id exists");
     if (type === 'vector') {
@@ -105,14 +160,17 @@ class Renderer {
     }
   }
   
-  async draw() {
+  /**
+   * render to map
+   * @returns 
+   */
+  draw() {
     if (!this.program) return;
     const matrixLocation = this.gl.getUniformLocation(this.program, "u_matrix");
     this.gl.uniformMatrix3fv(matrixLocation, false, this.matrix);
 
     this.layerManagers.forEach(async (layerManager) => {
       const data = await layerManager.fetchData();
-      console.log(data);
       
       Object.keys(data).forEach((tile) => {
         Object.keys(LAYERS).forEach((layer) => {
@@ -153,6 +211,11 @@ class Renderer {
     })
   }
 
+  /**
+   * mouse move event
+   * @param ev mouse move event data
+   * @returns 
+   */
   mousemove = (ev: MouseEvent) => {
     const [x, y] = getClipSpacePosition(ev, this.canvas);
     const [preX, preY] = vec3.transformMat3(
@@ -181,14 +244,24 @@ class Renderer {
     this.draw();
   }
 
+  /**
+   * mouse down event
+   * @param ev mouse down event data
+   * @returns 
+   */
   mousedown = (ev: MouseEvent) => {
     const [x, y] = getClipSpacePosition(ev, this.canvas);
     this.startPosition = {x, y};
     this.canvas.style.cursor = 'grabbing';
     this.canvas.addEventListener('mousemove', this.mousemove);
-    this.canvas.addEventListener('mouseup', this.clear);
+    this.canvas.addEventListener('mouseup', this.mouseup);
   }
 
+  /**
+   * mouse wheel event
+   * @param ev mouse wheel event data
+   * @returns 
+   */
   mousezoom = (ev: WheelEvent) => {
     ev.preventDefault();
     const [x, y] = getClipSpacePosition(ev, this.canvas);
@@ -213,10 +286,14 @@ class Renderer {
     this.draw();
   }
 
-  clear = () => {
+  /**
+   * mouse up event
+   * @returns 
+   */
+  mouseup = () => {
     this.canvas.style.cursor = 'grab';
     this.canvas.removeEventListener('mousemove', this.mousemove);
-    this.canvas.removeEventListener('mouseup', this.clear);
+    this.canvas.removeEventListener('mouseup', this.mouseup);
   }
 }
 
