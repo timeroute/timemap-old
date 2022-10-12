@@ -49,34 +49,38 @@ export function geometryToVertices(geometry: GeoJSON.Geometry) {
   return new Float32Array([]);
 }
 
-const getTileURL = (url: string, x: number, y: number, z: number) => (
-  url
+function getTileURL(url: string, x: number, y: number, z: number) {
+  return url
     .replace('{x}', String(x))
     .replace('{y}', String(y))
     .replace('{z}', String(z))
-);
+}
 
-export const fetchTile = async ({ tile, layers, url }: any) => {
-  const [x, y, z] = tile;
-  const res = await fetch(url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y)));
-  const data = await res.arrayBuffer();
-  const pbf = new Protobuf(data);
-  const tileData = new VectorTile(pbf);
-
-  const layerDatas: any = {};
-  Object.keys(layers).forEach((layer) => {
-    if (tileData?.layers?.[layer]) {
-      // @ts-ignore
-      const numFeatures = tileData.layers[layer]?._features?.length || 0;
-      const features = [];
-      for (let i = 0; i < numFeatures; i++) {
-        const geojson = tileData.layers[layer].feature(i).toGeoJSON(x, y, z);
-        const vertices = geometryToVertices(geojson.geometry);
-        features.push(vertices);
+export async function fetchTile({ tile, layers, url }: any) {
+  try {
+    const [x, y, z] = tile;
+    const res = await fetch(url.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y)));
+    const data = await res.arrayBuffer();
+    const pbf = new Protobuf(data);
+    const tileData = new VectorTile(pbf);
+  
+    const layerDatas: any = {};
+    Object.keys(layers).forEach((layer) => {
+      if (tileData?.layers?.[layer]) {
+        // @ts-ignore
+        const numFeatures = tileData.layers[layer]?._features?.length || 0;
+        const features = [];
+        for (let i = 0; i < numFeatures; i++) {
+          const geojson = tileData.layers[layer].feature(i).toGeoJSON(x, y, z);
+          const vertices = geometryToVertices(geojson.geometry);
+          features.push(vertices);
+        }
+        layerDatas[layer] = features;
       }
-      layerDatas[layer] = features;
-    }
-  });
-
-  return layerDatas;
+    });
+  
+    return layerDatas;
+  } catch (err) {
+    console.log(err);
+  }
 }

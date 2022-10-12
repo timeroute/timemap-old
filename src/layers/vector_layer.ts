@@ -1,9 +1,6 @@
 import Renderer from "../webgl/renderer";
-import Protobuf from 'pbf';
-import { VectorTile } from "@mapbox/vector-tile";
 import { LAYERS } from "../constants";
 import { fetchTile } from "../utils/fetch-data";
-// import { geometryToVertices } from "../utils/transform";
 
 export default class VectorLayer {
   renderer: Renderer;
@@ -33,9 +30,15 @@ export default class VectorLayer {
   }
 
   async fetchData() {
-    this.checkOptions();
     // get latest tiles in view
-    const tilesInView = this.renderer.getTilesInView();
+    let tilesInView = this.renderer.getTilesInView();
+    tilesInView = tilesInView.filter(([x, y, z]) => {
+      const N = Math.pow(2, z);
+      const validX = x >= 0 && x < N;
+      const validY = y >= 0 && y < N;
+      const validZ = z >= this.minZoom && z <= this.maxZoom;
+      return validX && validY && validZ;
+    });
     const tileData: any = {}
     const fetchController: AbortController = new AbortController();
     const tileReqs = tilesInView.map(async (tileInView) => {
@@ -45,11 +48,12 @@ export default class VectorLayer {
         console.log(tileKey, 'has cached');
         return;
       }
-      tileData[tileKey] = await fetchTile({
+      const _tileData = await fetchTile({
         tile: tileInView,
         layers: LAYERS,
         url: this.url,
       });
+      if (_tileData) tileData[tileKey] = _tileData;
     })
     await Promise.all(tileReqs);
     this.fetchController = fetchController;

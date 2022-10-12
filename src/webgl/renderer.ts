@@ -57,6 +57,8 @@ class Renderer {
    */
   layerManagers: Array<VectorLayer> = [];
 
+  layerDatas: any = [];
+
   /**
    * constructor function in Renderer class
    * @param canvas canvas element to init map
@@ -94,6 +96,7 @@ class Renderer {
     this.canvas.addEventListener('wheel', this.mousezoom);
 
     this.updateMatrix()
+    this.draw();
   }
 
   /**
@@ -128,22 +131,15 @@ class Renderer {
     const tilesInView: [number, number, number][] = [];
     const [minX, maxX] = [Math.max(minTile[0], 0), maxTile[0]];
     const [minY, maxY] = [Math.max(minTile[1], 0), maxTile[1]];
-    for (let x = minX; x <= maxX; x++) {
-      for (let y = minY; y <= maxY; y++) {
+    for (let x = minX - TILE_BUFFER; x <= maxX + TILE_BUFFER; x++) {
+      for (let y = minY - TILE_BUFFER; y <= maxY + TILE_BUFFER; y++) {
         tilesInView.push([x, y, z]);
-      }
-    }
-    const bufferedTiles = [];
-    for (let bufX = minX - TILE_BUFFER; bufX <= maxX + TILE_BUFFER; bufX++) {
-      for (let bufY = minY - TILE_BUFFER; bufY <= maxY + TILE_BUFFER; bufY++) {
-        bufferedTiles.push([bufX, bufY, z]); // buffer in xy direction
-
         // load parent tiles 2 levels up
-        bufferedTiles.push(tilebelt.getParent([bufX, bufY, z]));
-        bufferedTiles.push(tilebelt.getParent(tilebelt.getParent([bufX, bufY, z])));
+        // tilesInView.push(tilebelt.getParent([x, y, z]) as any);
+        // bufferedTiles.push(tilebelt.getParent(tilebelt.getParent([bufX, bufY, z])));
       }
     }
-    return tilesInView.concat(bufferedTiles);
+    return tilesInView;
   }
 
   /**
@@ -168,6 +164,14 @@ class Renderer {
       const layer = new VectorLayer(this, id, url, tileSize, minZoom, maxZoom);
       this.layerManagers.push(layer);
     }
+    this.updateTiles();
+  }
+
+  updateTiles() {
+    this.layerManagers.forEach(async (layerManager) => {
+      layerManager.abortFetch();
+      this.layerDatas.push(await layerManager.fetchData());
+    })
   }
   
   /**
@@ -179,10 +183,7 @@ class Renderer {
     const matrixLocation = this.gl.getUniformLocation(this.program, "u_matrix");
     this.gl.uniformMatrix3fv(matrixLocation, false, this.matrix);
 
-    this.layerManagers.forEach(async (layerManager) => {
-      layerManager.abortFetch();
-      const data = await layerManager.fetchData();
-      
+    this.layerDatas.forEach(async (data: any) => {
       Object.keys(data).forEach((tile) => {
         Object.keys(LAYERS).forEach((layer) => {
           if (!this.program) return;
@@ -220,6 +221,8 @@ class Renderer {
         });
       });
     })
+
+    window.requestAnimationFrame(() => this.draw());
   }
 
   /**
@@ -252,7 +255,7 @@ class Renderer {
     this.startPosition.y = y;
     
     this.updateMatrix();
-    this.draw();
+    this.updateTiles();
   }
 
   /**
@@ -294,7 +297,7 @@ class Renderer {
     this.camera.x += preZoomX - postZoomX;
     this.camera.y += preZoomY - postZoomY;
     this.updateMatrix();
-    this.draw();
+    this.updateTiles();
   }
 
   /**
